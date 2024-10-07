@@ -1,5 +1,8 @@
-package com.av2dac;
+package com.av2dac.controllers;
 
+import com.av2dac.entities.User;
+import com.av2dac.repositories.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -20,6 +23,18 @@ public class UserController {
     @GetMapping("/test")
     public String testEndpoint() {
         return "API is working!";
+    }
+
+    // Verificar a conexão com o banco de dados
+    @GetMapping("/checkDbConnection")
+    public ResponseEntity<String> checkDbConnection() {
+        try {
+            long count = userRepository.count();  // Realiza uma contagem na tabela 'users'
+            return ResponseEntity.ok("Conexão com o banco de dados está OK. Número de usuários: " + count);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao conectar com o banco de dados: " + e.getMessage());
+        }
     }
 
     // Listar todos os usuários
