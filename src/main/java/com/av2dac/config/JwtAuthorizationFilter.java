@@ -1,5 +1,6 @@
 package com.av2dac.config;
 
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import com.av2dac.util.JwtUtil;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,26 +30,22 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
 
-        String email = null;
-        String jwt = null;
-
-        // Verifica se o cabeçalho de autorização está presente e começa com "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7); // Extrai o token JWT
-            email = jwtUtil.extractUsername(jwt); // Extrai o email do token
-        }
+            String jwt = authHeader.substring(7);
+            String email = jwtUtil.extractUsername(jwt);
 
-        // Verifica se o email não é nulo e se não há autenticação atual no contexto
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(email); // Carrega os detalhes do usuário
-            // Valida o token
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) { // Passa apenas o username
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken); // Configura a autenticação
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+                if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+                    UsernamePasswordAuthenticationToken authenticationToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                }
             }
         }
 
-        filterChain.doFilter(request, response); // Continua o fluxo de requisição
+        filterChain.doFilter(request, response);
     }
 }

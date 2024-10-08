@@ -1,6 +1,6 @@
 package com.av2dac.controllers;
 
-import com.av2dac.dto.RegisterDto; // Importe o novo DTO
+import com.av2dac.dto.RegisterDto;
 import com.av2dac.entities.User;
 import com.av2dac.repositories.UserRepository;
 import com.av2dac.util.JwtUtil;
@@ -11,6 +11,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 class LoginResponse {
     private String message;
     private String token;
@@ -20,7 +22,6 @@ class LoginResponse {
         this.token = token;
     }
 
-    // Getters e Setters
     public String getMessage() {
         return message;
     }
@@ -54,13 +55,23 @@ public class AuthController {
     // Endpoint para registro de usuário
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody RegisterDto registerDto) {
+        // Verifica se o e-mail ou nome de usuário já está em uso
+        if (userRepository.findByEmail(registerDto.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("E-mail já registrado.");
+        }
+        if (userRepository.findByUsername(registerDto.getUsername()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nome de usuário já está em uso.");
+        }
+
         // Cria um novo usuário
         User user = new User();
         user.setUsername(registerDto.getUsername());
         user.setEmail(registerDto.getEmail());
-        user.setName(registerDto.getName()); // Define o nome
+        user.setName(registerDto.getName());
         user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
-        user.setRole("USER"); // Pode ser "USER", "ADMIN", etc.
+
+        // Define o papel padrão como USER
+        user.setRole(User.Role.USER); // Aqui estamos definindo o papel padrão
 
         // Salva o usuário no banco de dados
         userRepository.save(user);
@@ -71,13 +82,13 @@ public class AuthController {
     // Endpoint para login de usuário
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginDetails) {
-        User user = userRepository.findByEmail(loginDetails.getEmail());
+        Optional<User> userOptional = userRepository.findByEmail(loginDetails.getEmail());
 
-        if (user != null && passwordEncoder.matches(loginDetails.getPassword(), user.getPassword())) {
-            String token = jwtUtil.generateToken(user.getEmail());
+        if (userOptional.isPresent() && passwordEncoder.matches(loginDetails.getPassword(), userOptional.get().getPassword())) {
+            String token = jwtUtil.generateToken(userOptional.get().getEmail());
             return ResponseEntity.ok(new LoginResponse("Login bem-sucedido!", token));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas.");
         }
     }
 
@@ -85,12 +96,9 @@ public class AuthController {
     @GetMapping("/userinfo")
     public ResponseEntity<User> getUserInfo(Authentication authentication) {
         String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
+        Optional<User> userOptional = userRepository.findByEmail(email);
 
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        return ResponseEntity.ok(user);
+        return userOptional.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 }

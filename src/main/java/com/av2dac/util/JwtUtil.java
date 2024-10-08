@@ -11,15 +11,15 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}") // Carregar a chave secreta de um arquivo de configuração
-    private String SECRET_KEY; // Use uma chave mais forte em produção
+    @Value("${jwt.secret}") // Carrega a chave secreta do arquivo de configuração
+    private String SECRET_KEY; // Use uma chave segura em produção
 
     // Método para gerar o token JWT
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Expiração em 10 horas
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Expira em 10 horas
                 .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
@@ -42,7 +42,10 @@ public class JwtUtil {
     // Método para extrair todas as Claims do token
     private Claims extractClaims(String token) {
         try {
-            return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+            return Jwts.parser()
+                    .setSigningKey(SECRET_KEY)
+                    .parseClaimsJws(token)
+                    .getBody();
         } catch (Exception e) {
             throw new RuntimeException("Token inválido ou expirado."); // Lança exceção caso o token não seja válido
         }

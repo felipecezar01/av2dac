@@ -4,6 +4,7 @@ import com.av2dac.entities.Car;
 import com.av2dac.repositories.CarRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,21 +21,24 @@ public class CarController {
         this.carRepository = carRepository;
     }
 
-    // Listar todos os carros
+    // Listar todos os carros - Acesso para USER e ADMIN
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<Car>> getAllCars() {
         List<Car> cars = carRepository.findAll();
         return ResponseEntity.ok(cars);
     }
 
-    // Criar um novo carro
+    // Criar um novo carro - Apenas ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/add")
     public ResponseEntity<Car> createCar(@RequestBody Car car) {
         Car savedCar = carRepository.save(car);
         return ResponseEntity.ok(savedCar);
     }
 
-    // Atualizar um carro existente
+    // Atualizar um carro existente - Apenas ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{id}")
     public ResponseEntity<Car> updateCar(@PathVariable Long id, @RequestBody Car carDetails) {
         Optional<Car> carOptional = carRepository.findById(id);
@@ -54,7 +58,8 @@ public class CarController {
         }
     }
 
-    // Deletar um carro
+    // Deletar um carro - Apenas ADMIN
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
         Optional<Car> carOptional = carRepository.findById(id);

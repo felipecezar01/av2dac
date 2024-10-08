@@ -3,25 +3,37 @@ package com.av2dac.entities;
 import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
 
 @Entity
 @Table(name = "users") // Define o nome da tabela como "users" para evitar conflito com palavras reservadas
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username; // Adicionei o campo username
+    private String username;
     private String name;
     private String email;
     private String password;
 
-    // Adicione um campo para armazenar o papel (role) do usuário
-    private String role; // Pode ser "USER", "ADMIN", etc.
+    @Enumerated(EnumType.STRING)
+    private Role role; // Define um único role em vez de um conjunto
+
+    public void addRole(Role role) {
+    }
+
+    public enum Role {
+        USER, ADMIN
+    }
+
+    // Construtor padrão
+    public User() {
+    }
 
     // Getters e Setters
     public Long getId() {
@@ -32,11 +44,11 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() { // Adicionei o método getter para username
+    public String getUsername() {
         return username;
     }
 
-    public void setUsername(String username) { // Adicionei o método setter para username
+    public void setUsername(String username) {
         this.username = username;
     }
 
@@ -64,17 +76,36 @@ public class User {
         this.password = password;
     }
 
-    // Adicione o método getRole para acessar o papel do usuário
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
-    // Método que retorna as autoridades (roles) do usuário
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }
