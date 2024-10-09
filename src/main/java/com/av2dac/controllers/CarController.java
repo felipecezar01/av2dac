@@ -23,7 +23,7 @@ public class CarController {
 
     // Listar todos os carros - Acesso para USER e ADMIN
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-    @GetMapping("/all")
+    @GetMapping
     public ResponseEntity<List<Car>> getAllCars() {
         List<Car> cars = carRepository.findAll();
         return ResponseEntity.ok(cars);
@@ -31,7 +31,7 @@ public class CarController {
 
     // Criar um novo carro - Apenas ADMIN
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/add")
+    @PostMapping
     public ResponseEntity<Car> createCar(@RequestBody Car car) {
         Car savedCar = carRepository.save(car);
         return ResponseEntity.ok(savedCar);
@@ -39,7 +39,7 @@ public class CarController {
 
     // Atualizar um carro existente - Apenas ADMIN
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<Car> updateCar(@PathVariable Long id, @RequestBody Car carDetails) {
         Optional<Car> carOptional = carRepository.findById(id);
         if (carOptional.isPresent()) {
@@ -60,7 +60,7 @@ public class CarController {
 
     // Deletar um carro - Apenas ADMIN
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
         Optional<Car> carOptional = carRepository.findById(id);
         if (carOptional.isPresent()) {

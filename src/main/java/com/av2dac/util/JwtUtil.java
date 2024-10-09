@@ -3,51 +3,61 @@ package com.av2dac.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}") // Carrega a chave secreta do arquivo de configuração
-    private String SECRET_KEY; // Use uma chave segura em produção
+    private final SecretKey key;
+    private final long jwtExpirationInMillis;
 
-    // Método para gerar o token JWT
+    public JwtUtil(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration}") long jwtExpirationInMillis) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+        this.jwtExpirationInMillis = jwtExpirationInMillis;
+    }
+
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("roles", "USER") // Você pode ajustar isso para incluir o papel real do usuário
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Expira em 10 horas
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationInMillis))
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // Método para extrair o email (username) do token JWT
     public String extractUsername(String token) {
         return extractClaims(token).getSubject();
     }
 
-    // Método para verificar se o token expirou
     public Boolean isTokenExpired(String token) {
-        return extractClaims(token).getExpiration().before(new Date());
-    }
-
-    // Método para validar o token JWT
-    public Boolean validateToken(String token, String email) {
-        return (extractUsername(token).equals(email) && !isTokenExpired(token));
-    }
-
-    // Método para extrair todas as Claims do token
-    private Claims extractClaims(String token) {
         try {
-            return Jwts.parser()
-                    .setSigningKey(SECRET_KEY)
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (Exception e) {
-            throw new RuntimeException("Token inválido ou expirado."); // Lança exceção caso o token não seja válido
+            return extractClaims(token).getExpiration().before(new Date());
+        } catch (JwtException e) {
+            return true;
         }
+    }
+
+    public Boolean validateToken(String token, String email) {
+        try {
+            String tokenEmail = extractUsername(token);
+            return (tokenEmail.equals(email) && !isTokenExpired(token));
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    private Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

@@ -2,17 +2,27 @@ package com.av2dac.dto;
 
 public class RegisterDto {
     private String username;
+    private String name;
     private String email;
     private String password;
-    private String name; // Novo campo
+    private String role; // Pode ser "USER" ou "ADMIN"
 
     // Getters e Setters
+
     public String getUsername() {
         return username;
     }
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getEmail() {
@@ -31,11 +41,11 @@ public class RegisterDto {
         this.password = password;
     }
 
-    public String getName() { // Getter para o nome
-        return name;
+    public String getRole() {
+        return role;
     }
 
-    public void setName(String name) { // Setter para o nome
-        this.name = name;
+    public void setRole(String role) {
+        this.role = role;
     }
 }

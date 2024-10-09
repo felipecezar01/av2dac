@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table(name = "users") // Define o nome da tabela como "users" para evitar conflito com palavras reservadas
+@Table(name = "users")
 public class User implements UserDetails {
 
     @Id
@@ -22,10 +22,7 @@ public class User implements UserDetails {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private Role role; // Define um único role em vez de um conjunto
-
-    public void addRole(Role role) {
-    }
+    private Role role;
 
     public enum Role {
         USER, ADMIN
@@ -36,21 +33,27 @@ public class User implements UserDetails {
     }
 
     // Getters e Setters
+
     public Long getId() {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    // O método getUsername() do UserDetails retorna o email para autenticação
+    @Override
+    public String getUsername() {
+        return email;
     }
 
-    public String getUsername() {
+    // Métodos para o campo 'username'
+    public String getUserName() {
         return username;
     }
 
-    public void setUsername(String username) {
+    public void setUserName(String username) {
         this.username = username;
     }
+
+    // Outros getters e setters
 
     public String getName() {
         return name;
@@ -68,6 +71,8 @@ public class User implements UserDetails {
         this.email = email;
     }
 
+    // O método getPassword() do UserDetails retorna a senha
+    @Override
     public String getPassword() {
         return password;
     }
@@ -83,6 +88,8 @@ public class User implements UserDetails {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    // Implementação dos métodos do UserDetails
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -2,38 +2,32 @@ package com.av2dac.controllers;
 
 import com.av2dac.entities.User;
 import com.av2dac.repositories.UserRepository;
-import com.av2dac.services.JwtTokenProvider;
+import com.av2dac.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
-    private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public UserController(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
-    @GetMapping("/test")
-    public String testEndpoint() {
-        return "API is working!";
+        this.jwtUtil = jwtUtil;
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -55,12 +49,7 @@ public class UserController {
 
                 userRepository.save(userToUpdate);
 
-                String newToken = jwtTokenProvider.createToken(
-                        userToUpdate.getEmail(),
-                        userToUpdate.getAuthorities().stream()
-                                .map(grantedAuthority -> grantedAuthority.getAuthority())
-                                .collect(Collectors.toList())
-                );
+                String newToken = jwtUtil.generateToken(userToUpdate.getEmail());
 
                 Map<String, String> response = new HashMap<>();
                 response.put("token", newToken);
