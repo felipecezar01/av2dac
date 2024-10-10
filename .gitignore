@@ -1,38 +1,54 @@
-target/
+# Build output directories
+/target/
+/build/
+
+# Maven
 !.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+**/target/
+/pom.xml.tag
+/pom.xml.releaseBackup
+/pom.xml.versionsBackup
+/logs
+*.log
+*.tmp
 
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
-*.iml
-*.ipr
+# IDE specific files
 
-### Eclipse ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
+## IntelliJ IDEA
+/.idea/
+/*.iws
+/*.iml
+/*.ipr
+
+## Eclipse
+/.classpath
+/.project
+/.settings/
+/.factorypath
+/.apt_generated
 .springBeans
 .sts4-cache
 
-### NetBeans ###
+## NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+## Visual Studio Code
+/.vscode/
 
-### Mac OS ###
+# OS-specific files
 .DS_Store
+Thumbs.db
+
+# Sensitive configuration files
+/src/main/resources/application.properties
+
+# Include example configuration file
+!/src/main/resources/application-example.properties
+
+# Exclude other unnecessary files
+*.swp
+*~

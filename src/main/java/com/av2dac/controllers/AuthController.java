@@ -4,6 +4,7 @@ import com.av2dac.dto.LoginResponse;
 import com.av2dac.dto.RegisterDto;
 import com.av2dac.entities.User;
 import com.av2dac.repositories.UserRepository;
+import com.av2dac.services.EmailService;
 import com.av2dac.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,9 @@ public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private EmailService emailService;
+
     // Endpoint para registro de usuário
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody RegisterDto registerDto) {
@@ -54,6 +58,10 @@ public class AuthController {
         }
 
         userRepository.save(user);
+
+        // Enviar e-mail de confirmação
+        emailService.sendRegistrationEmail(user);
+
         return ResponseEntity.status(HttpStatus.CREATED).body("Usuário registrado com sucesso!");
     }
 
