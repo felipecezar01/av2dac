@@ -3,14 +3,19 @@ package com.av2dac.controllers;
 import com.av2dac.entities.User;
 import com.av2dac.repositories.UserRepository;
 import com.av2dac.util.JwtUtil;
+import com.google.zxing.qrcode.QRCodeWriter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import com.google.zxing.*;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -73,5 +78,55 @@ public class UserController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // Endpoint para o usuário gerar QR code de suas informações
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @GetMapping("/qrcode")
+    public ResponseEntity<byte[]> getUserQrCode(Authentication authentication) throws WriterException, IOException {
+        String email = authentication.getName();
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            // Gerar o conteúdo do QR code
+            String qrContent = generateUserQrContent(user);
+
+            // Gerar a imagem do QR code
+            byte[] qrImage = generateQrCodeImage(qrContent);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
+            headers.setContentDispositionFormData("attachment", "user_" + user.getId() + "_qrcode.png");
+
+            return new ResponseEntity<>(qrImage, headers, HttpStatus.OK);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Método para gerar o conteúdo do QR code
+    private String generateUserQrContent(User user) {
+        return "Usuário ID: " + user.getId() +
+                "\nNome: " + user.getName() +
+                "\nUsername: " + user.getUsername() +
+                "\nEmail: " + user.getEmail();
+    }
+
+    // Método para gerar a imagem do QR code com suporte a UTF-8
+    private byte[] generateQrCodeImage(String content) throws WriterException, IOException {
+        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+        int width = 300; // largura da imagem
+        int height = 300; // altura da imagem
+
+        // Configurações do QR code com UTF-8
+        Map<EncodeHintType, Object> hints = new HashMap<>();
+        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+
+        BitMatrix bitMatrix = qrCodeWriter.encode(content, BarcodeFormat.QR_CODE, width, height, hints);
+
+        ByteArrayOutputStream pngOutputStream = new ByteArrayOutputStream();
+        MatrixToImageWriter.writeToStream(bitMatrix, "PNG", pngOutputStream);
+        return pngOutputStream.toByteArray();
     }
 }
