@@ -2,15 +2,17 @@ package com.av2dac.controllers;
 
 import com.av2dac.dto.CarSummaryDto;
 import com.av2dac.entities.Car;
-import com.av2dac.repositories.CarRepository;
+import com.av2dac.services.CarService;
+import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.itextpdf.kernel.pdf.*;
-import com.itextpdf.layout.*;
-import com.itextpdf.layout.element.*;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Cell;
 import com.google.zxing.*;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
@@ -19,20 +21,16 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.List; // Importação correta de java.util.List
 
 @RestController
 @RequestMapping("/cars")
 public class CarController {
 
-    private final CarRepository carRepository;
-
     @Autowired
-    public CarController(CarRepository carRepository) {
-        this.carRepository = carRepository;
-    }
+    private CarService carService;
 
     // Listar carros com filtros - Acesso para USER e ADMIN
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
@@ -45,30 +43,7 @@ public class CarController {
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String licensePlate) {
 
-        List<Car> cars = carRepository.findAll();
-
-        // Aplicar filtros
-        List<Car> filteredCars = cars.stream()
-                .filter(car -> name == null || car.getName().equalsIgnoreCase(name))
-                .filter(car -> brand == null || car.getBrand().equalsIgnoreCase(brand))
-                .filter(car -> model == null || car.getModel().equalsIgnoreCase(model))
-                .filter(car -> year == null || car.getYear() == year)
-                .filter(car -> city == null || car.getCity().equalsIgnoreCase(city))
-                .filter(car -> licensePlate == null || car.getLicensePlate().equalsIgnoreCase(licensePlate))
-                .toList();
-
-        // Mapear para CarSummaryDto
-        List<CarSummaryDto> carSummaries = filteredCars.stream()
-                .map(car -> new CarSummaryDto(
-                        car.getName(),
-                        car.getPrice(),
-                        car.getYear(),
-                        car.getBrand(),
-                        car.getCity(),
-                        car.getLicensePlate()
-                ))
-                .toList();
-
+        List<CarSummaryDto> carSummaries = carService.getFilteredCars(name, brand, model, year, city, licensePlate);
         return ResponseEntity.ok(carSummaries);
     }
 
@@ -76,7 +51,7 @@ public class CarController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<Car> createCar(@RequestBody Car car) {
-        Car savedCar = carRepository.save(car);
+        Car savedCar = carService.saveCar(car);
         return ResponseEntity.ok(savedCar);
     }
 
@@ -84,7 +59,7 @@ public class CarController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Car> updateCar(@PathVariable Long id, @RequestBody Car carDetails) {
-        Optional<Car> carOptional = carRepository.findById(id);
+        Optional<Car> carOptional = carService.getCarById(id);
         if (carOptional.isPresent()) {
             Car carToUpdate = carOptional.get();
             carToUpdate.setName(carDetails.getName());
@@ -97,7 +72,7 @@ public class CarController {
             carToUpdate.setColor(carDetails.getColor());
             carToUpdate.setKilometers(carDetails.getKilometers());
 
-            Car updatedCar = carRepository.save(carToUpdate);
+            Car updatedCar = carService.saveCar(carToUpdate);
             return ResponseEntity.ok(updatedCar);
         } else {
             return ResponseEntity.notFound().build();
@@ -108,9 +83,9 @@ public class CarController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
-        Optional<Car> carOptional = carRepository.findById(id);
+        Optional<Car> carOptional = carService.getCarById(id);
         if (carOptional.isPresent()) {
-            carRepository.delete(carOptional.get());
+            carService.deleteCar(carOptional.get());
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
@@ -121,7 +96,7 @@ public class CarController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/report")
     public ResponseEntity<InputStreamResource> getCarsReport() throws IOException {
-        List<Car> cars = carRepository.findAll();
+        List<Car> cars = carService.getAllCars();
 
         ByteArrayInputStream bis = generatePdfReport(cars);
 
@@ -186,7 +161,7 @@ public class CarController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/qrcode")
     public ResponseEntity<byte[]> getCarQrCode(@PathVariable Long id) throws WriterException, IOException {
-        Optional<Car> carOptional = carRepository.findById(id);
+        Optional<Car> carOptional = carService.getCarById(id);
         if (carOptional.isPresent()) {
             Car car = carOptional.get();
 

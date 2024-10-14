@@ -1,8 +1,9 @@
 package com.av2dac.controllers;
 
 import com.av2dac.entities.User;
-import com.av2dac.repositories.UserRepository;
+import com.av2dac.services.UserService;
 import com.av2dac.util.JwtUtil;
+import com.google.zxing.WriterException;
 import com.google.zxing.qrcode.QRCodeWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -16,21 +17,19 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
     @Autowired
-    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
-        this.userRepository = userRepository;
+    public UserController(UserService userService, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+        this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
@@ -38,9 +37,9 @@ public class UserController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PutMapping("/update/{id}")
     public ResponseEntity<Map<String, String>> updateUser(@PathVariable Long id, @RequestBody User userDetails, Authentication authentication) {
-        Optional<User> user = userRepository.findById(id);
-        if (user.isPresent()) {
-            User userToUpdate = user.get();
+        Optional<User> userOptional = userService.findById(id);
+        if (userOptional.isPresent()) {
+            User userToUpdate = userOptional.get();
             String loggedInUserEmail = authentication.getName();
 
             boolean isAdmin = authentication.getAuthorities().stream()
@@ -49,16 +48,17 @@ public class UserController {
 
             if (isAdmin || isOwner) {
                 if (userDetails.getName() != null) userToUpdate.setName(userDetails.getName());
+                if (userDetails.getUserName() != null) userToUpdate.setUserName(userDetails.getUserName());
                 if (userDetails.getEmail() != null) userToUpdate.setEmail(userDetails.getEmail());
                 if (userDetails.getPassword() != null) userToUpdate.setPassword(passwordEncoder.encode(userDetails.getPassword()));
 
-                userRepository.save(userToUpdate);
+                userService.saveUser(userToUpdate);
 
                 String newToken = jwtUtil.generateToken(userToUpdate.getEmail());
 
                 Map<String, String> response = new HashMap<>();
                 response.put("token", newToken);
-                response.put("message", "User updated successfully");
+                response.put("message", "Usuário atualizado com sucesso");
                 return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -71,9 +71,9 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        Optional<User> userOptional = userRepository.findById(id);
+        Optional<User> userOptional = userService.findById(id);
         if (userOptional.isPresent()) {
-            userRepository.delete(userOptional.get());
+            userService.deleteUser(userOptional.get());
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
@@ -85,7 +85,7 @@ public class UserController {
     @GetMapping("/qrcode")
     public ResponseEntity<byte[]> getUserQrCode(Authentication authentication) throws WriterException, IOException {
         String email = authentication.getName();
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<User> userOptional = userService.findByEmail(email);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
@@ -109,7 +109,7 @@ public class UserController {
     private String generateUserQrContent(User user) {
         return "Usuário ID: " + user.getId() +
                 "\nNome: " + user.getName() +
-                "\nUsername: " + user.getUsername() +
+                "\nUsername: " + user.getUserName() +
                 "\nEmail: " + user.getEmail();
     }
 

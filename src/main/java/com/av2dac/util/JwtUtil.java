@@ -1,10 +1,7 @@
 package com.av2dac.util;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -23,9 +20,9 @@ public class JwtUtil {
         this.jwtExpirationInMillis = jwtExpirationInMillis;
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String username) {
         return Jwts.builder()
-                .setSubject(email)
+                .setSubject(username)
                 .claim("roles", "USER") // Você pode ajustar isso para incluir o papel real do usuário
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationInMillis))
@@ -45,10 +42,10 @@ public class JwtUtil {
         }
     }
 
-    public Boolean validateToken(String token, String email) {
+    public Boolean validateToken(String token, String username) {
         try {
-            String tokenEmail = extractUsername(token);
-            return (tokenEmail.equals(email) && !isTokenExpired(token));
+            String tokenUsername = extractUsername(token);
+            return (tokenUsername.equals(username) && !isTokenExpired(token));
         } catch (JwtException e) {
             return false;
         }

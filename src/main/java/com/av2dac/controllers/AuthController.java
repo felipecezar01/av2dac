@@ -3,15 +3,13 @@ package com.av2dac.controllers;
 import com.av2dac.dto.LoginResponse;
 import com.av2dac.dto.RegisterDto;
 import com.av2dac.entities.User;
-import com.av2dac.repositories.UserRepository;
+import com.av2dac.services.AuthService;
 import com.av2dac.services.EmailService;
-import com.av2dac.util.JwtUtil;
+import com.av2dac.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.*;
+import org.springframework.http.*;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -21,61 +19,33 @@ import java.util.Optional;
 public class AuthController {
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private AuthService authService;
 
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private UserService userService;
+
     // Endpoint para registro de usuário
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody RegisterDto registerDto) {
-        if (userRepository.findByEmail(registerDto.getEmail()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("E-mail já registrado.");
-        }
-        if (userRepository.findByUsername(registerDto.getUsername()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Nome de usuário já está em uso.");
-        }
+        String response = authService.registerUser(registerDto);
 
-        User user = new User();
-        user.setUserName(registerDto.getUsername());
-        user.setEmail(registerDto.getEmail());
-        user.setName(registerDto.getName());
-        user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
-
-        if ("ADMIN".equalsIgnoreCase(registerDto.getRole())) {
-            user.setRole(User.Role.ADMIN);
+        if ("Usuário registrado com sucesso!".equals(response)) {
+            Optional<User> userOptional = userService.findByEmail(registerDto.getEmail());
+            userOptional.ifPresent(emailService::sendRegistrationEmail);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } else {
-            user.setRole(User.Role.USER); // Papel padrão é USER
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
-
-        userRepository.save(user);
-
-        // Enviar e-mail de confirmação
-        emailService.sendRegistrationEmail(user);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body("Usuário registrado com sucesso!");
     }
 
     // Endpoint para login de usuário
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody User loginDetails) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDetails.getEmail(), loginDetails.getPassword())
-            );
-
-            User user = (User) authentication.getPrincipal();
-            String token = jwtUtil.generateToken(user.getEmail());
-
+            String token = authService.authenticateUser(loginDetails);
             return ResponseEntity.ok(new LoginResponse("Login bem-sucedido!", token));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciais inválidas.");
@@ -90,7 +60,7 @@ public class AuthController {
         }
 
         String email = authentication.getName();
-        Optional<User> userOptional = userRepository.findByEmail(email);
+        Optional<User> userOptional = userService.findByEmail(email);
 
         if (userOptional.isPresent()) {
             User user = userOptional.get();

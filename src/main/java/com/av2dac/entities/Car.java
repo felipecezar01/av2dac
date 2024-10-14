@@ -1,9 +1,6 @@
 package com.av2dac.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Car {
@@ -19,14 +16,14 @@ public class Car {
     private String city;
     private String licensePlate;
     private double price;
-    private String color;      // Novo campo
-    private int kilometers;    // Novo campo
+    private String color;
+    private int kilometers;
 
     // Construtor padrão
     public Car() {
     }
 
-    // Construtor com parâmetros (opcional)
+    // Construtor com parâmetros
     public Car(String name, String brand, String model, int year, String city, String licensePlate, double price, String color, int kilometers) {
         this.name = name;
         this.brand = brand;
@@ -40,6 +37,7 @@ public class Car {
     }
 
     // Getters e Setters
+
     public Long getId() {
         return id;
     }
@@ -116,4 +114,3 @@ public class Car {
         this.kilometers = kilometers;
     }
 }
-
