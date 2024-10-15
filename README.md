@@ -13,7 +13,7 @@ Para o desenvolvimento do projeto, utilizamos as seguintes tecnologias:
 - **IntelliJ IDEA**: Ambiente de desenvolvimento integrado (IDE);
 - **Arquitetura MVC**: Organização do código seguindo a arquitetura Modelo-Visão-Controlador.
 
-[Imagem das ferramentas utilizadas]
+![Tools](https://www.dropbox.com/scl/fi/lpc448hk2d05kxmt3jl1i/MVC.png?rlkey=uqrn6iygbfo0ou8dk1s1hoyv2&st=wcvrxrsg&raw=1)
 
 ## Sobre o Projeto
 
