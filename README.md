@@ -22,7 +22,7 @@ Este projeto consiste na criação de uma API para o sistema de uma loja de carr
 - **Usuários**: possuem permissões limitadas;
 - **Admins**: têm acesso total às funcionalidades do sistema.
 
-[Imagem das tabelas do banco de dados](#estrutura-do-banco-de-dados)
+[Imagem das tabelas do banco de dados](#🗂️-estrutura-do-banco-de-dados)
 
 ## 🔍 Funcionalidades
 
