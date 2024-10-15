@@ -2,7 +2,7 @@
 
 Esse é um projeto desenvolvido durante o curso de Análise e Desenvolvimento de Sistemas, na disciplina de Desenvolvimento de Aplicações Corporativas. O objetivo foi aplicar conceitos de desenvolvimento backend e práticas de mercado, usando um sistema corporativo em Java.
 
-## 🛠️ Ferramentas Utilizadas
+## Ferramentas Utilizadas
 
 Para o desenvolvimento do projeto, utilizamos as seguintes tecnologias:
 
@@ -15,16 +15,16 @@ Para o desenvolvimento do projeto, utilizamos as seguintes tecnologias:
 
 [Imagem das ferramentas utilizadas]
 
-## 📖 Sobre o Projeto
+## Sobre o Projeto
 
 Este projeto consiste na criação de uma API para o sistema de uma loja de carros, com foco na construção do backend. O sistema é composto por duas tabelas principais (Carros e Usuários) e implementa funcionalidades de autenticação e autorização, além de criptografia. O sistema permite diferentes níveis de acesso com base no tipo de usuário: 
 
 - **Usuários**: possuem permissões limitadas;
 - **Admins**: têm acesso total às funcionalidades do sistema.
 
-[Imagem das tabelas do banco de dados](#🗂️-estrutura-do-banco-de-dados)
+[Imagem das tabelas do banco de dados](#estrutura-do-banco-de-dados)
 
-## 🔍 Funcionalidades
+## Funcionalidades
 
 O sistema conta com as seguintes funcionalidades:
 
@@ -51,7 +51,7 @@ O administrador tem permissões mais amplas, incluindo:
 4. **Gerar QR Codes** com informações de veículos;
 5. **Gerar relatórios em PDF** contendo a lista de carros e suas especificações completas.
 
-## 🗂️ Estrutura do Banco de Dados
+## Estrutura do Banco de Dados
 
 ### Tabela Usuários
 
